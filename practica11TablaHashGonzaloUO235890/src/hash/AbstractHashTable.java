@@ -1,0 +1,56 @@
+package hash;
+
+public abstract class AbstractHashTable<T> implements HashTable<T> {
+	protected int capacityB;
+	protected int elementNumber;
+
+	@Override
+	public int getCapacityB() {
+		return capacityB;
+	}
+
+	@Override
+	public int getElementNumber() {
+		return elementNumber;
+	}
+
+	@Override
+	public double getLoadFactor() {
+		// TODO
+		return 0.0;
+	}
+
+	protected abstract int hashFunction(T element, int attempts);
+
+	protected static boolean isPrimeNumber(int n) {
+		if (n < 2) {
+			return false;
+		}
+		for (int i = 2; i < n; i++) {
+			if (n % i == 0) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	protected static int getNextPrimeNumber(int n) {
+		int nextPrime = n + 1;
+		while (!isPrimeNumber(nextPrime)) {
+			nextPrime++;
+		}
+		return nextPrime;
+	}
+
+	protected static int getPreviousPrimeNumber(int n) {
+		if (n < 3) {
+			throw new IllegalArgumentException();
+		}
+		int previousPrime = n - 1;
+		while (!isPrimeNumber(previousPrime)) {
+			previousPrime--;
+		}
+		return previousPrime;
+	}
+
+}
