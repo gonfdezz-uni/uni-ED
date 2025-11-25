@@ -30,8 +30,23 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 
 	@Override
 	public boolean search(T element) {
-		// TODO Auto-generated method stub
-		//HACER EN CASA
+		for (int attemps = 0; attemps < capacityB; attemps++) {
+			// Posición en la que comprobaré si el elemento de ese nodo == element
+			// y está en un estado en el que pueda ser encontrado
+			int indexToCheck = hashFunction(element, attemps);
+			// Nodo de la lista en la posición de comprobación
+			// Comparo el elemento y tengo en cuenta el estado del nodo
+			HashNode<T> nodeToCheck = associativeArray[indexToCheck];
+			if (nodeToCheck.getStatus().equals(Status.EMPTY)) {
+				return false;
+			}
+			if (nodeToCheck.getElement() == element && nodeToCheck.getStatus().equals(Status.DELETED)) {
+				return false;
+			}
+			if(nodeToCheck.getElement() == element) {
+				return true;
+			}
+		}
 		return false;
 	}
 
@@ -61,34 +76,55 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 	}
 
 	protected int linearProbing(int hashCode, int attemps) {
+		if (hashCode < 0 || attemps < 0 || attemps > capacityB) {
+			throw new IllegalArgumentException();
+		}
 		return (hashCode + attemps) % capacityB;
 	}
 
 	protected int quadraticProbing(int hashCode, int attemps) {
+		checkIfNegative(hashCode);
+		checkIfNegative(attemps);
+		if (attemps > capacityB) {
+			throw new IllegalArgumentException();
+		}
 		return (hashCode + attemps * attemps) % capacityB;
 	}
 
 	protected int doubleHashing(int hashCode, int attemps) {
+		checkIfNegative(hashCode);
+		checkIfNegative(attemps);
+		if (attemps > capacityB) {
+			throw new IllegalArgumentException();
+		}
 		return (hashCode + attemps * jumpFunctionH(hashCode)) % capacityB;
 	}
 
 	protected int jumpFunctionH(int hashCode) {
+		checkIfNegative(hashCode);
 		int r = getPreviousPrimeNumber(capacityB);
 		return r - (hashCode % r);
 	}
 
-	protected HashNode<T> findMatchingNode(T element){
-		for(int attemps = 0; attemps<capacityB; attemps++) {
-			int indiceAProbar = hashFunction(element,attemps);
+	private void checkIfNegative(int hashCode) {
+		if (hashCode < 0) {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	protected HashNode<T> findMatchingNode(T element) {
+		for (int attemps = 0; attemps < capacityB; attemps++) {
+			int indiceAProbar = hashFunction(element, attemps);
 			HashNode<T> nodoAProbar = associativeArray[indiceAProbar];
-			if(nodoAProbar.getStatus().equals(Status.EMPTY)) {
+			if (nodoAProbar.getStatus().equals(Status.EMPTY)) {
 				return null;
-			}if(nodoAProbar.getElement().equals(element)) {
+			}
+			if (nodoAProbar.getElement().equals(element)) {
 				return nodoAProbar;
 			}
 		}
 		return null;
-	
+
 	}
 
 	public String toString() {
