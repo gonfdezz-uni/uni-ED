@@ -3,29 +3,57 @@ package hash;
 public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTable<T> {
 	HashNode<T>[] associativeArray;
 	private HashStrategy hashStrategy;
+	
+	double maxLoadFactor;
+	double minLoadFactor;
 
-	public ClosedHashTable(int capacity, HashStrategy hashStrategy) {
-		if (capacity < 3) {
-			throw new IllegalArgumentException();
-		}
+	public ClosedHashTable(int capacity, HashStrategy hashStrategy, double max, double min) {
 		if (hashStrategy == null) {
 			throw new NullPointerException();
 		}
-		if (!isPrimeNumber(capacity)) {
-			capacity = getNextPrimeNumber(capacity);
+		initializeEmptyAssociativeArray(capacity);
+		this.hashStrategy = hashStrategy;
+		this.maxLoadFactor = max;
+		this.minLoadFactor = min;
+	}
+	
+	public ClosedHashTable(int capacity, HashStrategy hashStrategy, double max){
+		this(capacity,hashStrategy,max, -1 );
+	}
+	public ClosedHashTable(int capacity, HashStrategy hashStrategy){
+		this(capacity,hashStrategy,2);
+	}
+
+	protected void initializeEmptyAssociativeArray(int newCapacityB) {
+		if (newCapacityB < 3) {
+			throw new IllegalArgumentException();
 		}
-		this.capacityB = capacity;
-		this.associativeArray = new HashNode[capacity];
-		for (int i = 0; i < capacity; i++) {
+		if (!isPrimeNumber(newCapacityB)) {
+			newCapacityB = getNextPrimeNumber(newCapacityB);
+		}
+		this.capacityB = newCapacityB;
+		this.associativeArray = new HashNode[newCapacityB];
+		for (int i = 0; i < newCapacityB; i++) {
 			associativeArray[i] = new HashNode<T>();
 		}
-		this.hashStrategy = hashStrategy;
 	}
 
 	@Override
 	public boolean add(T element) {
-		// TODO Auto-generated method stub
-		return false;
+		//No se admiten duplicados -> devuelve false
+		//Si encuentro un deleted (primer eliminado) hay que guardar esa posicion y comprobar 
+		//la búsqueda hasta el final para cpmprobar si hay repetidos.
+		//Conviene tener la mayoría de emptys 
+		//Si encuentro un empty se añade y se pone valid
+		//FALTAN COMPROBACIONES
+		HashNode<T> nodo = findAvailableNodeFor(element);
+		if(nodo == null) {
+			return false;
+		}else {
+			addElementToNode(nodo, element);
+			dynamicResize();
+			return true;
+		}
 	}
 
 	@Override
@@ -43,7 +71,7 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 			if (nodeToCheck.getElement() == element && nodeToCheck.getStatus().equals(Status.DELETED)) {
 				return false;
 			}
-			if(nodeToCheck.getElement() == element) {
+			if (nodeToCheck.getElement() == element) {
 				return true;
 			}
 		}
@@ -52,8 +80,20 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 
 	@Override
 	public boolean remove(T element) {
-		// TODO Auto-generated method stub
+		if (findMatchingNode(element) == null) {
+			return false;
+		}
+		if (findMatchingNode(element).getStatus().equals(Status.DELETED)) {
+			return false;
+		}
+		if(findMatchingNode(element).getStatus().equals(Status.VALID)) {
+			removeElementFromNode();
+			InverseDynamicResize();
+			return true;
+		}
+
 		return false;
+
 	}
 
 	@Override
@@ -77,6 +117,7 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 
 	protected int linearProbing(int hashCode, int attemps) {
 		if (hashCode < 0 || attemps < 0 || attemps > capacityB) {
+			//PREGUNTAR ESTO
 			throw new IllegalArgumentException();
 		}
 		return (hashCode + attemps) % capacityB;
@@ -127,6 +168,65 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 
 	}
 
+	protected void removeElementFromNode(HashNode<T> node) {
+		//ESTO FALLA
+		if(node==null) {
+			throw new NullPointerException();
+		}
+		node.setStatus(Status.DELETED);
+		elementNumber--;
+	}
+	
+	/**
+	 * Este método obtiene el hash del elemento y resuelve la collision hasta encontrar 
+	 * un nodo válido para añadir o null si no lo hay:
+	 * Si encuentro un nodo eliminado (el primero) guardo el índice para el futuro.
+	 * Nodo empty lo puedo añadir sin problemas:
+	 * -En el primer deleted que haya encontrado
+	 * -En el empty si no encontré un nodp deleted antes
+	 * Si encuentro un nodo con el contenido igual depende:
+	 * -Si tiene estado VALID no puedo, return null
+	 * -Si tiene estado DELETED me comporto como un empty
+	 * Si encuentro un nodo deleted, lo guardo para más tarde
+	 * Si excedo el número máximo de intentos:
+	 * -En el primer nodo delelted que haya encontrado
+	 * -Null si no hay otro
+	 * 
+	 * @param element
+	 * @return
+	 */
+	protected HashNode<T> findAvailableNodeFor(T element){
+		int posicionDelPrimerNodoEncontrado  = -1;
+		
+		for (int attemps = 0; attemps < capacityB; attemps++) {
+			int posicion = hashFunction(element, attemps);
+			HashNode<T> nodo = associativeArray[posicion];
+			
+			if(nodo.getStatus() == Status.EMPTY ||
+					nodo.getStatus() ==Status.DELETED && nodo.getElement().equals(element)) {
+				if(posicionDelPrimerNodoEncontrado!=-1) {
+					return associativeArray[posicionDelPrimerNodoEncontrado];
+				}
+				return nodo;
+			}if(nodo.getStatus() == Status.VALID && nodo.getElement().equals(element)) {
+				return null;
+			}if(nodo.getStatus() == Status.DELETED && posicionDelPrimerNodoEncontrado == -1) {
+				posicionDelPrimerNodoEncontrado = posicion;
+			}
+		}
+		if(posicionDelPrimerNodoEncontrado!=-1) {
+			return associativeArray[posicionDelPrimerNodoEncontrado];
+		}
+		return null;
+		
+	}
+	
+	protected void addElementToNode(HashNode<T> node, T element) {
+		node.setElement(element);
+		node.setStatus(Status.VALID);
+		elementNumber++;
+	}
+
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < capacityB; i++) {
@@ -137,5 +237,38 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 		}
 		return sb.toString();
 	}
+	
+	//REDIMENSIONES
+	
+	protected void updateCapacity(int newCapacity) {
+		//Faltan algunas comprobaciones
+		if(newCapacity<elementNumber) {
+			throw new IllegalArgumentException();
+		}
+		HashNode<T>[] old = associativeArray;
+		for(HashNode<T> nodo: old) {
+			initializeEmptyAssociativeArray(newCapacity);
+			if(nodo.getStatus() == Status.VALID) {
+				add(nodo.getElement());
+			}
+		}
+	}
 
+	protected void dynamicResize() {
+		if(getLoadFactor()>maxLoadFactor) {
+			updateCapacity(capacityB*2);
+		}
+	}
+	
+	protected void InverseDynamicResize() {
+		if(getLoadFactor()<minLoadFactor) {
+			int newCapacity = getPreviousPrimeNumber(capacityB/2);
+			if(newCapacity<3) {
+				newCapacity=3;
+			}
+			updateCapacity(newCapacity);
+		}
+	}
+	
+	
 }
