@@ -25,6 +25,10 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 		this(capacity, hashStrategy, 2);
 	}
 
+	/**
+	 * Inicializa un array asociativo vacío
+	 * @param newCapacityB
+	 */
 	protected void initializeEmptyAssociativeArray(int newCapacityB) {
 		if (newCapacityB < 3) {
 			throw new IllegalArgumentException();
@@ -125,7 +129,12 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 		}
 		return -1;
 	}
-
+	/**
+	 * Estrategia linearProbing
+	 * @param hashCode
+	 * @param attemps
+	 * @return hashCode de esta estrategia
+	 */
 	protected int linearProbing(int hashCode, int attemps) {
 		if (hashCode < 0 || attemps < 0 || attemps > capacityB) {
 			throw new IllegalArgumentException();
@@ -133,7 +142,12 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 
 		return (hashCode + attemps) % capacityB;
 	}
-
+	/**
+	 * Estrategia quadraticProbing
+	 * @param hashCode
+	 * @param attemps
+	 * @return hashCode de esta estrategia
+	 */
 	protected int quadraticProbing(int hashCode, int attemps) {
 		checkIfNegative(hashCode);
 		checkIfNegative(attemps);
@@ -142,7 +156,12 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 		}
 		return (hashCode + attemps * attemps) % capacityB;
 	}
-
+	/**
+	 * Estrategia doubleHashing
+	 * @param hashCode
+	 * @param attemps
+	 * @return hashCode de esta estrategia
+	 */
 	protected int doubleHashing(int hashCode, int attemps) {
 		checkIfNegative(hashCode);
 		checkIfNegative(attemps);
@@ -151,19 +170,29 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 		}
 		return (hashCode + attemps * jumpFunctionH(hashCode)) % capacityB;
 	}
-
+	/**
+	 * 
+	 * @param hashCode
+	 * @return
+	 */
 	protected int jumpFunctionH(int hashCode) {
 		checkIfNegative(hashCode);
 		int r = getPreviousPrimeNumber(capacityB);
 		return r - (hashCode % r);
 	}
-
+	/**
+	 * Comprueba si el hashcode es negativo
+	 * @param hashCode
+	 */
 	private void checkIfNegative(int hashCode) {
 		if (hashCode < 0) {
 			throw new IllegalArgumentException();
 		}
 	}
-
+	/**
+	 * @param element
+	 * @return nodo que sirva para el add
+	 */
 	protected HashNode<T> findMatchingNode(T element) {
 		for (int attemps = 0; attemps < capacityB; attemps++) {
 			int indiceAProbar = hashFunction(element, attemps);
@@ -178,7 +207,10 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 		return null;
 
 	}
-
+	/**
+	 * Hace el remove del nodo específico
+	 * @param node
+	 */
 	protected void removeElementFromNode(HashNode<T> node) {
 		if (this.elementNumber == 0) {
 			throw new IllegalStateException();
@@ -205,7 +237,7 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 	 * primer nodo delelted que haya encontrado -Null si no hay otro
 	 * 
 	 * @param element
-	 * @return
+	 * @return nodo para el add
 	 */
 	protected HashNode<T> findAvailableNodeFor(T element) {
 
@@ -237,7 +269,11 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 		return null;
 
 	}
-
+	/**
+	 * Hace la funcion del add como tal
+	 * @param node
+	 * @param element
+	 */
 	protected void addElementToNode(HashNode<T> node, T element) {
 		if (elementNumber == capacityB) {
 			throw new IllegalStateException();
@@ -268,7 +304,11 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 	}
 
 	// REDIMENSIONES
-
+	
+	/**
+	 * Actualiza la capacidad de la tabla
+	 * @param newCapacity
+	 */
 	protected void updateCapacity(int newCapacity) {
 		// Faltan algunas comprobaciones
 		if (newCapacity < elementNumber) {
@@ -282,7 +322,9 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 			}
 		}
 	}
-
+	/**
+	 * Redimensiona la tabla aumentando su tamaño
+	 */
 	protected void dynamicResize() {
 		if (getLoadFactor() > maxLoadFactor) {
 			int newCapacity = getNextPrimeNumber(capacityB * 2);
@@ -290,6 +332,9 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 		}
 	}
 
+	/**
+	 * Redimensiona la tabla disminuyendo su tamaño
+	 */
 	protected void InverseDynamicResize() {
 		if (getLoadFactor() < minLoadFactor) {
 			int newCapacity = capacityB / 2;
