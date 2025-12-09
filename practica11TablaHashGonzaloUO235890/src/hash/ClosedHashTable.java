@@ -37,6 +37,8 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 		for (int i = 0; i < newCapacityB; i++) {
 			associativeArray[i] = new HashNode<T>();
 		}
+		this.elementNumber = 0;
+		
 	}
 
 	@Override
@@ -273,9 +275,9 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 			throw new IllegalArgumentException();
 		}
 		HashNode<T>[] old = associativeArray;
+		initializeEmptyAssociativeArray(newCapacity);
 		for (HashNode<T> nodo : old) {
-			initializeEmptyAssociativeArray(newCapacity);
-			if (nodo.getStatus() == Status.VALID) {
+			if (nodo!=null && nodo.getStatus() == Status.VALID) {
 				add(nodo.getElement());
 			}
 		}
@@ -290,9 +292,11 @@ public class ClosedHashTable<T> extends AbstractHashTable<T> implements HashTabl
 
 	protected void InverseDynamicResize() {
 		if (getLoadFactor() < minLoadFactor) {
-			int newCapacity = getPreviousPrimeNumber(capacityB / 2);
-			if (newCapacity < 3) {
+			int newCapacity = capacityB / 2;
+			if (newCapacity <= 3) {
 				newCapacity = 3;
+			}else {
+				newCapacity = getPreviousPrimeNumber(newCapacity);
 			}
 			updateCapacity(newCapacity);
 		}
